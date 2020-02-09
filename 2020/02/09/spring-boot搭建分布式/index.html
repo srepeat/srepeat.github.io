@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        blogs
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body id="bodyx">
+    <div class="hd posts">
+    <a href="/index.html"><i class="fa fa-reply replay-btn" aria-hidden="true"></i></a>
+    <div class="post-title">
+        <p>
+            spring boot搭建分布式
+        </p>
+        <hr>
+    </div>
+    <div class="post-content">
+        <h1 id="springBoot-分布式zookeeper-Dubbo"><a href="#springBoot-分布式zookeeper-Dubbo" class="headerlink" title="springBoot 分布式zookeeper+Dubbo"></a>springBoot 分布式zookeeper+Dubbo</h1><h1 id="一、基础知识"><a href="#一、基础知识" class="headerlink" title="一、基础知识"></a>一、基础知识</h1><ul>
+<li>什么是分布式系统</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1</span>、分布式系统是若干独立计算机的集合，这些计算机对于用户来说就像单个相关系统</span><br><span class="line"></span><br><span class="line"><span class="number">2</span>、分布式系统是由一组通过网络进行通信、为了完成共同的任务而协调工作的计算机节点组成的系统。</span><br><span class="line"><span class="number">3</span>、分布式系统的出现是为了用廉价的、普通的机器完成单个计算机无法完成的计算、存储任务。其目的是利用更多的机器，处理更多的数据。</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>为什么提倡分布式架构</p>
+<ul>
+<li><p>随着互联网规模和需求越来越大，传统的单体应用已经不能支撑</p>
+<ul>
+<li>单一应用架构</li>
+</ul>
+<ul>
+<li></li>
+<li><p>将网站所有东西打包在一个应用中，将其部署，减少部署成本，此时ORM成为重点<br><img src="https://img-blog.csdnimg.cn/20200208132912547.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80MTk2MzIyMA==,size_16,color_FFFFFF,t_70" alt="单体应用"></p>
+<pre><code>- 优点：适合小网站，访问量不大的情况下
+缺点：
+    1. 性能扩展比较难
+
+    2. 协同开发问题
+
+    3. 不利于升级维护</code></pre><ul>
+<li><h2 id="垂直应用架构"><a href="#垂直应用架构" class="headerlink" title="垂直应用架构"></a>垂直应用架构</h2><ul>
+<li>当访问量逐渐增大，单一应用增加机器带来的加速度越来越小，将应用拆成互不相干的几个应用，以提升效率。此时，用于加速前端页面开发的Web框架(MVC)是关键<br><img src="https://img-blog.csdnimg.cn/20200208133534949.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80MTk2MzIyMA==,size_16,color_FFFFFF,t_70" alt="垂直应用"></li>
+<li>通过切分业务来实现各个模块独立部署，降低了维护和部署的难度，团队各司其职更易管理，性能扩展也更方便，更有针对性</li>
+<li>缺点：公用模块无法重复利用，开发性的浪费</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li><p>分布式架构</p>
+<ul>
+<li><img src="https://img-blog.csdnimg.cn/20200208133829406.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80MTk2MzIyMA==,size_16,color_FFFFFF,t_70" alt="分布式架构"><ul>
+<li>将业务进行拆分，每一个业务作为一个单独的服务抽离出来，形成稳定的服务中心</li>
+<li>用于提高业务和复合整用为<strong>RPC</strong>分布式服务框架重点</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>流动计算架构</p>
+<ul>
+<li></li>
+<li>当服务越来越多，容量的评估，小服务资源的浪费等问题逐渐显现，此时需增加一个调度中心基于访问压力实时管理集群容量，提高集群利用率。此<img src="https://img-blog.csdnimg.cn/20200208134342181.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80MTk2MzIyMA==,size_16,color_FFFFFF,t_70" alt="流式计算框架">)时，用于提高机器利用率的资源调度和治理中心(SOA)[ Service Oriented Architecture]是关键。</li>
+</ul>
+<ul>
+<li><h2 id="什么是RPC？"><a href="#什么是RPC？" class="headerlink" title="什么是RPC？"></a>什么是RPC？</h2><ul>
+<li>RPC【Remote Procedure Call】是指远程过程调用，是一种进程间通信方式，他是一种技术的思想，而不是规范。它允许程序调用另一个地址空间（通常是共享网络的另一台机器上）的过程或函数，而不用程序员显式编码这个远程调用的细节。即程序员无论是调用本地的还是远程的函数，本质上编写的调用代码基本相同。</li>
+<li>两台服务器A，B，一个应用部署在A服务器上，想要调用B服务器上应用提供的函数/方法，由于不在一个内存空间，不能直接调用，需要通过网络来表达调用的语义和传达调用的数据。为什么要用RPC呢？就是无法在一个进程内，甚至一个计算机内通过本地调用的方式完成的需求，比如不同的系统间的通讯，甚至不同的组织间的通讯，由于计算能力需要横向扩展，需要在多台机器组成的集群上部署应用。RPC就是要像调用本地的函数一样去调远程函数；<br><a href="https://www.jianshu.com/p/2accc2840a1b" target="_blank" rel="noopener">推荐文章</a></li>
+<li>RPC原理图<br>  <img src="https://img-blog.csdnimg.cn/20200208134915861.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80MTk2MzIyMA==,size_16,color_FFFFFF,t_70" alt="RPC原理图"></li>
+<li>步骤分析<br><img src="https://img-blog.csdnimg.cn/20200208134942634.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80MTk2MzIyMA==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"><br>注意：RPC两个核心模块=&gt;通讯、序列化</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h1 id="二、Dubbo"><a href="#二、Dubbo" class="headerlink" title="二、Dubbo"></a>二、Dubbo</h1><ul>
+<li><p>什么是Dubbo</p>
+<ul>
+<li></li>
+<li>Dubbo是阿里巴巴开源的基于 Java 的高性能 RPC（一种远程调用） 分布式服务框架（SOA），致力于提供高性能和透明化的RPC远程服务调用方案，以及SOA服务治理方案。</li>
+</ul>
+</li>
+<li><p>为什么使用Dubbo</p>
+<ul>
+<li><ul>
+<li>使用Dubbo可以将核心业务抽取出来，作为独立的服务，逐渐形成稳定的服务中心，可用于提高业务复用<br>灵活扩展，使前端应用能更快速的响应多变的市场需求。</li>
+<li>分布式架构可以承受更大规模的并发流量。<br><img src="https://img-blog.csdnimg.cn/20200208140351591.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80MTk2MzIyMA==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></li>
+<li>服务提供者（Provider）：暴露服务的服务提供方，服务提供者在启动时，向注册中心注册自己提供的服务</li>
+<li>服务消费者（Consumer）: 调用远程服务的服务消费方，服务消费者在启动时，向注册中心订阅自己所需的服务，服务消费者，从提供者地址列表中，基于软负载均衡算法，选一台提供者进行调用，如果调用失败，再选另一台调用。</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li><p>注册中心（Registry）：注册中心返回服务提供者地址列表给消费者，如果有变更，注册中心将基于长连接推送变更数据给消费者</p>
+</li>
+<li><p>监控中心（Monitor）：服务消费者和提供者，在内存中累计调用次数和调用时间，定时每分钟发送一次统计数据到监控中心</p>
+</li>
+</ul>
+<p><a href="http://dubbo.apache.org/en-us/" target="_blank" rel="noopener">dubbo官网</a></p>
+<ul>
+<li><p>调用关系说明</p>
+<ul>
+<li></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<pre><code><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">服务容器负责启动，加载，运行服务提供者。</span><br><span class="line"></span><br><span class="line"><span class="number">1</span>、 服务提供者在启动时，向注册中心注册自己提供的服务。</span><br><span class="line"></span><br><span class="line"><span class="number">2</span>、 服务消费者在启动时，向注册中心订阅自己所需的服务。</span><br><span class="line"></span><br><span class="line"><span class="number">3</span>、 注册中心返回服务提供者地址列表给消费者，如果有变更，注册中心将基于长连接推送变更数据给消费者。</span><br><span class="line"></span><br><span class="line"><span class="number">4</span>、 服务消费者，从提供者地址列表中，基于软负载均衡算法，选一台提供者进行调用，如果调用失败，再选另一台调用。</span><br><span class="line"></span><br><span class="line"><span class="number">5</span>、 服务消费者和提供者，在内存中累计调用次数和调用时间，定时每分钟发送一次统计数据到监控中心。</span><br></pre></td></tr></table></figure>
+- 注册--&gt;订阅模式</code></pre><ul>
+<li><p>Dubbo环境搭建</p>
+<ul>
+<li></li>
+<li>下载zookeeper，<a href="http://mirror.bit.edu.cn/apache/zookeeper/" target="_blank" rel="noopener">下载地址</a>，本次使用zookeeper-3.4.11</li>
+<li>运行/bin/zkServer.cmd ，初次运行会报错，没有zoo.cfg配置文件</li>
+<li>可能遇到问题：闪退 !</li>
+</ul>
+</li>
+<li><p>解决方案：编辑zkServer.cmd文件末尾添加pause 。这样运行出错就不会退出，会提示错误信息，方便找到原因<br><img src="https://img-blog.csdnimg.cn/20200208141020315.png" alt="解决办法"></p>
+</li>
+<li><p>修改zoo.cfg配置文件</p>
+<ul>
+<li><p>将conf文件夹下面的zoo_sample.cfg复制一份改名为zoo.cfg即可</p>
+</li>
+<li><p>注意几个重要位置：</p>
+<ul>
+<li>dataDir=./   临时数据存储的目录（可写相对路径）</li>
+<li>clientPort=2181   zookeeper的端口号</li>
+<li>改完成后再次启动zookeeper</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><h2 id="window下安装dubbo-admin"><a href="#window下安装dubbo-admin" class="headerlink" title="window下安装dubbo-admin"></a>window下安装dubbo-admin</h2><ul>
+<li>dubbo本身并不是一个服务软件。它其实就是一个jar包，能够帮你的java程序连接到zookeeper，并利用zookeeper消费、提供服务</li>
+<li>dubbo-admin 是一个服务监控面板</li>
+</ul>
+<ul>
+<li>这里不安装也不影响使用</li>
+</ul>
+</li>
+</ul>
+<ol>
+<li>下载dubbo-admin<br> <a href="https://github.com/apache/dubbo-admin/tree/master" target="_blank" rel="noopener">下载地址</a></li>
+<li>解压进入目录</li>
+</ol>
+<ul>
+<li>案例版本是dubbo-2.7版本admin-dubbo-server/src\main\resources   =&gt; \application.properties 指定zookeeper地址<br><img src="https://img-blog.csdnimg.cn/20200208141934814.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80MTk2MzIyMA==,size_16,color_FFFFFF,t_70" alt="目录结构"></li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">server.port=7001  # 自己添加的一个控制台访问端口</span><br><span class="line"></span><br><span class="line">admin.registry.address=zookeeper:<span class="comment">//127.0.0.1:2181</span></span><br><span class="line">admin.config-center=zookeeper:<span class="comment">//127.0.0.1:2181</span></span><br><span class="line">admin.metadata-report.address=zookeeper:<span class="comment">//127.0.0.1:2181</span></span><br><span class="line"></span><br><span class="line">admin.root.user.name=root</span><br><span class="line">admin.root.user.password=root</span><br><span class="line">#group</span><br><span class="line">admin.registry.group=dubbo</span><br><span class="line">admin.config-center.group=dubbo</span><br><span class="line">admin.metadata-report.group=dubbo</span><br><span class="line"></span><br><span class="line">admin.apollo.token=e16e5cd903fd0c97a116c873b448544b9d086de9</span><br><span class="line">admin.apollo.appId=test</span><br><span class="line">admin.apollo.env=dev</span><br><span class="line">admin.apollo.cluster=<span class="keyword">default</span></span><br><span class="line">admin.apollo.namespace=dubbo</span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li>在项目目录下打包dubbo-admin</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mvn clean <span class="keyword">package</span> -Dmaven.test.skip=<span class="keyword">true</span></span><br></pre></td></tr></table></figure>
+<ul>
+<li>第一次打包的过程有点慢，需要耐心等待！直到成功</li>
+</ul>
+<ol start="4">
+<li>执行 dubbo-admin\target 下的dubbo-admin-0.0.1-SNAPSHOT.jar</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">java -jar dubbo-admin-<span class="number">0.0</span><span class="number">.1</span>-SNAPSHOT.jar</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>注意：一定要开启zookeeper服务</p>
+</li>
+<li><p>执行完毕，我们去访问一下 <a href="http://localhost:7001/" target="_blank" rel="noopener">http://localhost:7001/</a> ， 这时候我们需要输入登录账户和密码，我们都是默认的root-root；</p>
+</li>
+<li><p>登陆成功页面(这个是2.7版本Vue实现，所以比之前的肯定好看很多)</p>
+<p>  <img src="https://img-blog.csdnimg.cn/20200208152305663.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80MTk2MzIyMA==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
+<ul>
+<li><h2 id="SpringBoot-Dubbo-zookeeper"><a href="#SpringBoot-Dubbo-zookeeper" class="headerlink" title="SpringBoot + Dubbo + zookeeper"></a>SpringBoot + Dubbo + zookeeper</h2><ul>
+<li>框架搭建</li>
+</ul>
+<ol>
+<li>启动zookeeper </li>
+<li>IDEA创建一个新的空项目</li>
+<li>创建一个模块，实现服务提供者：provider-server ， 选择web依赖即可</li>
+<li>项目创建完毕，我们写一个服务<ul>
+<li>实现一个案例：</li>
+</ul>
+<ol>
+<li>编写接口</li>
+</ol>
+</li>
+</ol>
+</li>
+</ul>
+</li>
+</ul>
+<pre><code>            <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">TacketService</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function">String <span class="title">getTacket</span><span class="params">()</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+        2. 实现类
+
+
+            <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">TackServiceImpl</span> <span class="keyword">implements</span> <span class="title">TacketService</span> </span>&#123;</span><br><span class="line"> </span><br><span class="line"> 	<span class="function">String <span class="title">getTacket</span><span class="params">()</span></span>&#123;</span><br><span class="line"> 		<span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line"> 	  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+    5. 创建一个模块，实现服务消费者：consumer-server ， 选择web依赖即可
+    6. 项目创建完毕，我们写一个服务，比如用户的服务；
+         - 编写service
+
+
+            <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Service</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">UserService</span> </span>&#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+    - 需求：现在要给消费者提供服务怎么做？
+ * 服务提供者(provider) 
+     -
+     -  将服务提供者注册到注册中心，我们需要整合Dubbo和zookeeper，所以需要导包
+    <figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">从dubbo官网进入github，看下方的帮助文档，找到dubbo-springboot，找到依赖包</span><br><span class="line">&lt;!-- Dubbo Spring Boot Starter --&gt;</span><br><span class="line">    &lt;dependency&gt;</span><br><span class="line">        &lt;groupId&gt;org.apache.dubbo&lt;/groupId&gt;</span><br><span class="line">        &lt;artifactId&gt;dubbo-spring-boot-starter&lt;/artifactId&gt;</span><br><span class="line">        &lt;version&gt;2.7.3&lt;/version&gt;</span><br><span class="line">    &lt;/dependency&gt;</span><br></pre></td></tr></table></figure>
+    - zookeeper的包我们去maven仓库下载，zkclient；
+
+
+    <figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- https:<span class="comment">//mvnrepository.com/artifact/com.github.sgroschupf/zkclient --&gt;</span></span><br><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;com.github.sgroschupf&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;zkclient&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;0.1&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br></pre></td></tr></table></figure>
+    - 【新版的坑】zookeeper及其依赖包，解决日志冲突，还需要剔除日志依赖；
+    <figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- 引入zookeeper --&gt;</span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;org.apache.curator&lt;/groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;curator-framework&lt;/artifactId&gt;</span><br><span class="line">            &lt;version&gt;2.12.0&lt;/version&gt;</span><br><span class="line">        &lt;/dependency&gt;</span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;org.apache.curator&lt;/groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;curator-recipes&lt;/artifactId&gt;</span><br><span class="line">            &lt;version&gt;2.12.0&lt;/version&gt;</span><br><span class="line">        &lt;/dependency&gt;</span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;org.apache.zookeeper&lt;/groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;zookeeper&lt;/artifactId&gt;</span><br><span class="line">            &lt;version&gt;3.4.14&lt;/version&gt;</span><br><span class="line">            &lt;!--排除这个slf4j-log4j12--&gt;</span><br><span class="line">            &lt;exclusions&gt;</span><br><span class="line">                &lt;exclusion&gt;</span><br><span class="line">                    &lt;groupId&gt;org.slf4j&lt;/groupId&gt;</span><br><span class="line">                    &lt;artifactId&gt;slf4j-log4j12&lt;/artifactId&gt;</span><br><span class="line">                &lt;/exclusion&gt;</span><br><span class="line">            &lt;/exclusions&gt;</span><br><span class="line">        &lt;/dependency&gt;</span><br></pre></td></tr></table></figure>
+* 在springboot配置文件中配置dubbo相关属性！
+
+
+    <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">#服务名称</span><br><span class="line">dubbo.application.name=provider_server</span><br><span class="line">#注册地址以及元数据</span><br><span class="line">dubbo.registry.address=zookeeper:<span class="comment">//127.0.0.1:2181</span></span><br><span class="line">dubbo.metadata-report.address=zookeeper:<span class="comment">//127.0.0.1:2181</span></span><br><span class="line"># 扫描指定包下服务</span><br><span class="line">dubbo.scan.base-packages=cn.jcet.service</span><br></pre></td></tr></table></figure>
+* 在service的实现类中配置服务注解，发布服务！注意导包问题
+
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> com.alibaba.dubbo.config.annotation.Service;</span><br><span class="line"><span class="keyword">import</span> org.springframework.stereotype.Component;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Service</span> <span class="comment">//dubbo的注解 现在已经过期</span></span><br><span class="line"><span class="meta">@Component</span> <span class="comment">//spring万能注解，将这个放到IOC容器中</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">TackServiceImpl</span> <span class="keyword">implements</span> <span class="title">TacketService</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">getTacket</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">"卖出一张票"</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+ **逻辑理解 ： 应用启动起来，dubbo就会扫描指定的包下带有@component注解的服务，将它发布在指定的注册中心中**
+* 服务消费者（consumer）
+  -
+  - 导入同提供者一样的依赖
+  - 配置文件
+    <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># 应用名</span><br><span class="line">dubbo.application.name=consumer_service</span><br><span class="line">#注册地址元数据</span><br><span class="line">dubbo.registry.address=zookeeper:<span class="comment">//127.0.0.1:2181</span></span><br><span class="line">dubbo.metadata-report.address=zookeeper:<span class="comment">//127.0.0.1:21811</span></span><br></pre></td></tr></table></figure>
+  - 本来正常步骤是需要将服务提供者的接口打包，然后用pom文件导入，我们这里使用简单的方式，直接将服务的接口拿过来，路径必须保证正确，即和服务提供者相同</code></pre><p><img src="https://img-blog.csdnimg.cn/2020020815445278.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80MTk2MzIyMA==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"><br>      - 用户服务类<br>        <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> org.apache.dubbo.config.annotation.Reference;</span><br><span class="line"><span class="keyword">import</span> org.springframework.stereotype.Service;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Service</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">UserService</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Reference</span> <span class="comment">//dubbo 远程调用注解</span></span><br><span class="line">    <span class="keyword">private</span> TacketService tacketService;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">showTacket</span><span class="params">()</span></span>&#123;</span><br><span class="line">        String tacket = tacketService.getTacket();</span><br><span class="line">        System.out.println(<span class="string">"Tacket服务层==&gt;"</span>+tacket);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><br>      - 测试类编写<br>        <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@SpringBootTest</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ConsumerServerApplicationTests</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    <span class="keyword">private</span> UserService userService;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Test</span></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">contextLoads</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        userService.showTacket();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><br>      - 启动测试<br>       1. 开启zookeeper<br>       2. 打开dubbo-admin实现监控（需要可视化面板查看的可以做）<br>       3. 开启服务者<br>       4. 消费者消费测试，结果：<br>    <img src="https://img-blog.csdnimg.cn/20200208155158537.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80MTk2MzIyMA==,size_16,color_FFFFFF,t_70" alt="测试结果"><br>       5.  监控中心<br>       <img src="https://img-blog.csdnimg.cn/2020020815505360.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80MTk2MzIyMA==,size_16,color_FFFFFF,t_70" alt="dubbo bordBash"><br>    * <a href="https://www.cnblogs.com/hellokuangshen/p/11330606.html" target="_blank" rel="noopener">也可以参考此篇文章</a><br>    * springBoot+zookeeper+dubbo 实现简单分布式案例（不足之处，请指出，共同进步）</p>
+
+    </div>
+    
+        <hr class="fhr">
+        <div id="vcomments"></div>
+    
+</div>
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" href="https://hexo.io" target="_blank" rel="noopener">Hexo</a>-<a class="flink" href="https://github.com/sanjinhub/hexo-theme-geek" target="_blank" rel="noopener">Geek</a>.
+        <label class="el-switch el-switch-green el-switch-sm" style="vertical-align: sub;">
+            <input type="checkbox" name="switch" id="update_style">
+            <span class="el-switch-style"></span>
+        </label>
+<!--         <script type="text/javascript">
+        var cnzz_protocol = (("https:" == document.location.protocol) ? "https://" : "http://");
+        document.write(unescape("%3Cspan id='cnzz_stat_icon_1278548644'%3E%3C/span%3E%3Cscript src='" + cnzz_protocol + "v1.cnzz.com/stat.php%3Fid%3D1278548644%26show%3Dpic1' type='text/javascript'%3E%3C/script%3E"));
+        </script> -->
+    </p>
+</div>
+<input type="hidden" id="web_style" value="black">
+<input type="hidden" id="valine_appid" value="oU6aM6U9xOv4LHEQLo3LLROT-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="TbfimrkuMCSYC9BPMRdOqKga">
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/libs/highlight/highlight.pack.js"></script>
+
+<script src='//cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+
+<script src="/js/js.js"></script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>
